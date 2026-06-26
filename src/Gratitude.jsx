@@ -1,19 +1,40 @@
-import React, { useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 
 function Gratitude() {
   const [gratitudes, setGratitudes] = useState([]);
   const [gratitudeText, setGratitudeText] = useState('');
 
+  // 1. GET: Pull gratitudes from backend on load
+  useEffect(() => {
+    fetch('http://localhost:5000/api/gratitude')
+      .then(res => res.json())
+      .then(data => setGratitudes(data))
+      .catch(err => console.error("Error fetching gratitudes:", err));
+  }, []);
+
+  // 2. POST: Push new gratitude to backend
   const handleAddGratitude = (e) => {
     e.preventDefault();
     if (!gratitudeText.trim()) return;
-    setGratitudes([...gratitudes, { id: Date.now(), text: gratitudeText }]);
-    setGratitudeText('');
+
+    const newGratitudePackage = {
+      text: gratitudeText
+    };
+
+    fetch('http://localhost:5000/api/gratitude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newGratitudePackage)
+    })
+      .then(res => res.json())
+      .then(savedGratitude => {
+        setGratitudes([...gratitudes, savedGratitude]);
+        setGratitudeText('');
+      })
+      .catch(err => console.error("Error saving gratitude:", err));
   };
   
   return (
-   
     <div style={{ padding: '20px', maxWidth: '500px', margin: 'auto', fontFamily: 'sans-serif' }}>
       <h2 style={{ color: '#4a5d4e' }}>Daily Gratitude Overflow</h2>
       <form onSubmit={handleAddGratitude} style={{ display: 'flex', gap: '5px', marginBottom: '20px' }}>
@@ -34,7 +55,6 @@ function Gratitude() {
         ))}
       </div>
     </div>
-    
   );
 }
 
